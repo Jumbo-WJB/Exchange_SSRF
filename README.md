@@ -2,6 +2,8 @@
 
 # This project is heavily replicated in ProxyShell, NtlmRelayToEWS
 
+https://mp.weixin.qq.com/s/GFcEKA48bPWsezNdVcrWag
+
 ## Brute Account 爆破可能存在的用户
 
 file with emails 需要尝试的邮箱文件：
