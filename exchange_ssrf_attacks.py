@@ -181,17 +181,6 @@ def convertFromTemplate(shellcode, templateFile):
         return e
 
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--target',required=True, help='the target Exchange Server ip')
-parser.add_argument('--email', help='victim email')
-parser.add_argument('--action',required=True,choices=['Brute','Search','Download'], help='The action you want to take')
-parser.add_argument("--file", help="email files with your want brute accounts")
-parser.add_argument("--keyword", help="keyword with you want search")
-parser.add_argument("--folder",default="inbox", help="folder name with you want download")
-args = parser.parse_args()
-
-
 #=========================================================================================
 # GLOBAL CONFIG
 #=========================================================================================
@@ -202,6 +191,7 @@ user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, li
 
 
 if __name__ == '__main__':
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
@@ -209,6 +199,14 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--target',required=True, help='the target Exchange Server ip')
+    parser.add_argument('--email', help='victim email')
+    parser.add_argument('--action',required=True,choices=['Brute','Search','Download'], help='The action you want to take')
+    parser.add_argument("--file", help="email files with your want brute accounts")
+    parser.add_argument("--keyword", help="keyword with you want search")
+    parser.add_argument("--folder",default="inbox", help="folder name with you want download")
+    args = parser.parse_args()
 
     if args.target and args.action == "Brute" and args.file:
         logger.debug("[Stage 999] Brute Account With EWS")
