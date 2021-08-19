@@ -1,0 +1,26 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+<soap:Header>
+  <t:RequestServerVersion Version="Exchange2016" />
+    <t:SerializedSecurityContext>
+      <t:UserSid>${sid}</t:UserSid>
+      <t:GroupSids>
+        <t:GroupIdentifier>
+          <t:SecurityIdentifier>S-1-5-21</t:SecurityIdentifier>
+        </t:GroupIdentifier>
+      </t:GroupSids>
+    </t:SerializedSecurityContext>
+</soap:Header>
+  <soap:Body>
+    <FindItem xmlns="http://schemas.microsoft.com/exchange/services/2006/messages"
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+              Traversal="Shallow">
+      <ItemShape>
+        <t:BaseShape>IdOnly</t:BaseShape>
+      </ItemShape>
+      <ParentFolderIds>
+        <t:DistinguishedFolderId Id="${folder}"/>
+      </ParentFolderIds>
+    </FindItem>
+  </soap:Body>
+</soap:Envelope>
