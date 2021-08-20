@@ -1,0 +1,40 @@
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+    xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" 
+    xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Header>
+      <t:RequestServerVersion Version="Exchange2016" />
+      <t:SerializedSecurityContext>
+        <t:UserSid>${sid}</t:UserSid>
+        <t:GroupSids>
+          <t:GroupIdentifier>
+            <t:SecurityIdentifier>S-1-5-21</t:SecurityIdentifier>
+          </t:GroupIdentifier>
+        </t:GroupSids>
+      </t:SerializedSecurityContext>
+    </soap:Header>
+  <soap:Body>
+    <m:FindItem Traversal="Shallow">
+      <m:ItemShape>
+        <t:BaseShape>IdOnly</t:BaseShape>
+        <t:AdditionalProperties>
+          <t:FieldURI FieldURI="item:Subject" />
+          <t:FieldURI FieldURI="item:DateTimeReceived" />
+          <t:FieldURI FieldURI="item:Size" />
+          <t:FieldURI FieldURI="item:Importance" />
+          <t:FieldURI FieldURI="message:IsRead" />
+        </t:AdditionalProperties>
+      </m:ItemShape>
+      <m:IndexedPageItemView MaxEntriesReturned="100" Offset="0" BasePoint="Beginning" />
+      <m:SortOrder>
+        <t:FieldOrder Order="Descending">
+          <t:FieldURI FieldURI="item:DateTimeReceived" />
+        </t:FieldOrder>
+      </m:SortOrder>
+      <m:ParentFolderIds>
+        <t:DistinguishedFolderId Id="${folder}" />
+      </m:ParentFolderIds>
+      <m:QueryString>${keyword}</m:QueryString>
+    </m:FindItem>
+  </soap:Body>
+</soap:Envelope>
