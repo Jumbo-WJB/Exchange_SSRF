@@ -251,7 +251,7 @@ def SearchMails(target, sid,folder,keyword):
             "User-Agent": user_agent,
             "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
                             },
-        data=FindItem_body,
+        data=FindItem_body.encode('utf-8'),
         verify=False
         )
     # If status code 200 is NOT returned, the request failed
