@@ -172,6 +172,9 @@ def DownloadEmails(target, sid,folder):
             data=GetItem_body,
             verify=False
             )   
+        if GetItem_request.status_code != 200:
+            logger.error("[Stage 777] Request failed - Get Mails Stage 2 GetItem Error!")
+            exit()
         itemXML = ET.fromstring(GetItem_request.content.decode())
         mimeContent = itemXML.find(".//t:MimeContent", exchangeNamespace).text
         logger.debug("[Stage 777] Get Mails Stage 3 Downloaditem ing... ")
@@ -224,19 +227,36 @@ def DownAttachment(target, sid,id,i):
                 )
             AttachmentXML = ET.fromstring(Attachment_request.content.decode())
             AttachmentXMLname = AttachmentXML.find(".//t:Name", exchangeNamespace).text
-            AttachmentXMLcontent = AttachmentXML.find(".//t:Content", exchangeNamespace).text
-            logger.debug("[Stage 555] Start Download Attachment... ")
-            try:
-                outputDir = "output"
-                if not os.path.exists(outputDir):
-                    os.makedirs(outputDir)
-                fileName = outputDir + "/item-{}-".format(i) + AttachmentXMLname
-                with open(fileName, 'wb+') as fileHandle:
-                    fileHandle.write(b64decode(AttachmentXMLcontent))
-                    fileHandle.close()
-                    print("[+] Item [{}] saved successfully".format(fileName))
-            except IOError:
-                print("[!] Could not write file [{}]".format(fileName))
+            if "<t:Content>" in Attachment_request.content.decode():
+                AttachmentXMLcontent = AttachmentXML.find(".//t:Content", exchangeNamespace).text
+                logger.debug("[Stage 555] Start Download Attachment... ")
+                try:
+                    outputDir = "output"
+                    if not os.path.exists(outputDir):
+                        os.makedirs(outputDir)
+                    fileName = outputDir + "/item-{}-".format(i) + AttachmentXMLname
+                    with open(fileName, 'wb+') as fileHandle:
+                        fileHandle.write(b64decode(AttachmentXMLcontent))
+                        fileHandle.close()
+                        print("[+] Item [{}] saved successfully".format(fileName))
+                except IOError:
+                    print("[!] Could not write file [{}]".format(fileName))
+            elif "</t:Body>" in Attachment_request.content.decode():
+                AttachmentXMLcontent = AttachmentXML.find(".//t:Body", exchangeNamespace).text
+                logger.debug("[Stage 555] Start Download Attachment With Body... ")
+                try:
+                    outputDir = "output"
+                    if not os.path.exists(outputDir):
+                        os.makedirs(outputDir)
+                    fileName = outputDir + "/item-{}-".format(i) + AttachmentXMLname
+                    with open(fileName, 'wb+') as fileHandle:
+                        fileHandle.write(AttachmentXMLcontent.encode())
+                        fileHandle.close()
+                        print("[+] Item [{}] saved successfully".format(fileName))
+                except IOError:
+                    print("[!] Could not write file [{}]".format(fileName))
+            else:
+                logger.warning("Attachment ERROR ,Download Failed!")
 
 
 
