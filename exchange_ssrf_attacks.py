@@ -109,8 +109,6 @@ def Brute_Account(target,email):
     # print(stage999.content.decode())
     if "Check credentials and try again" in stage999.content.decode():
         print(f"{email} valid")
-    for item in folderXML.findall(".//t:EmailAddress", exchangeNamespace):
-        print(item.text)
 
 
 def SearchContact(target,sid,keyword):
